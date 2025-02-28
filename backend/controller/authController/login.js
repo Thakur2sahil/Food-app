@@ -33,9 +33,6 @@ const  login = async(req,res)=>{
     
                 // Sign the token with the secret key
                 const token = jwt.sign(payload, secretKey, { expiresIn: '1h' });
-                console.log("token",token);
-                
-    
                 return res.status(200).json({
                     message: "Successful Login",
                     user: user,

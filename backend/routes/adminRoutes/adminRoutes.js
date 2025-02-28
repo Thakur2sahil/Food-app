@@ -1,22 +1,23 @@
 const { Router } = require("express");
-const { login } = require("../../controller/authController/login");
-const { signup } = require("../../controller/authController/singup");
 const multer = require("multer");
-const { newProduct } = require("../../controller/adminController/NewProductController/NewProductController");
+const newProduct = require("../../controller/adminController/NewProductController/NewProductController");
 
 const adminRoutes = Router();
 
+// Multer setup
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "../backend/uploads");
+  destination: function (req, file, cb) {
+    return cb(null, "./uploads");
   },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+  filename: function (req, file, cb) {
+    // Ensure unique filename by adding a timestamp
+    return cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
+
 const upload = multer({ storage });
 
-adminRoutes.post("/newproduct", newProduct);
-adminRoutes.post("/signup", upload.single("image"), signup);
+// Routes
+adminRoutes.post("/newproduct", upload.single("image"), newProduct);
 
 module.exports = { adminRoutes };

@@ -19,7 +19,7 @@ app.use("/api", route);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    return cb(null, "/uploads");
+    return cb(null, "../backend/uploads");
   },
   filename: function (req, file, cb) {
     return cb(null, `${Date.now()}-${file.originalname}`);
@@ -28,142 +28,143 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-app.post("/signup", upload.single("image"), async (req, res) => {
-  console.log("hello");
+// app.post("/signup", upload.single("image"), async (req, res) => {
+//   console.log("hello");
 
-  try {
-    const imgpath = `uploads/${req.file.filename.replace(/\\/g, "/")}`;
-    const { fullName, username, email, password, role } = req.body;
+//   try {
+//     const imgpath = `uploads/${req.file.filename.replace(/\\/g, "/")}`;
+//     const { fullName, username, email, password, role } = req.body;
 
-    // Check if the email already exists
-    const checkEmailQuery = "SELECT * FROM sahil.users WHERE email=$1";
-    const emailResult = await db.query(checkEmailQuery, [email]);
+//     // Check if the email already exists
+//     const checkEmailQuery = "SELECT * FROM sahil.users WHERE email=$1";
+//     const emailResult = await db.query(checkEmailQuery, [email]);
 
-    if (emailResult.rows.length > 0) {
-      return res.status(400).json({ error: "Email already exists" });
-    }
+//     if (emailResult.rows.length > 0) {
+//       return res.status(400).json({ error: "Email already exists" });
+//     }
 
-    // Insert the user data
-    const insertQuery = `
-            INSERT INTO sahil.users (full_name, username, email, password, role, image)
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`;
-    const insertResult = await db.query(insertQuery, [
-      fullName,
-      username,
-      email,
-      password,
-      role,
-      imgpath,
-    ]);
+//     // Insert the user data
+//     const insertQuery = `
+//             INSERT INTO sahil.users (full_name, username, email, password, role, image)
+//             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`;
+//     const insertResult = await db.query(insertQuery, [
+//       fullName,
+//       username,
+//       email,
+//       password,
+//       role,
+//       imgpath,
+//     ]);
 
-    const newUser = insertResult.rows[0];
+//     const newUser = insertResult.rows[0];
 
-    // Create a JWT token with the user's role
-    const payload = {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-    };
-    const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+//     // Create a JWT token with the user's role
+//     const payload = {
+//       id: newUser.id,
+//       email: newUser.email,
+//       role: newUser.role,
+//     };
+//     const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
 
-    // Prepare the HTML email content
-    const userHtmlTable = `
-            <table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse;">
-                <thead>
-                    <tr><th colspan="2">Registration Details</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td>Username:</td><td>${username}</td></tr>  <!-- Fixed variable name -->
-                    <tr><td>Email:</td><td>${email}</td></tr>
-                    <tr><td>Full Name:</td><td>${fullName}</td></tr>
-                    <tr><td>Role:</td><td>${role}</td></tr>
-                </tbody>
-            </table>`;
+//     // Prepare the HTML email content
+//     const userHtmlTable = `
+//             <table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse;">
+//                 <thead>
+//                     <tr><th colspan="2">Registration Details</th></tr>
+//                 </thead>
+//                 <tbody>
+//                     <tr><td>Username:</td><td>${username}</td></tr>  <!-- Fixed variable name -->
+//                     <tr><td>Email:</td><td>${email}</td></tr>
+//                     <tr><td>Full Name:</td><td>${fullName}</td></tr>
+//                     <tr><td>Role:</td><td>${role}</td></tr>
+//                 </tbody>
+//             </table>`;
 
-    await sendEmail(
-      email,
-      "Registration Details",
-      `Hello ${fullName},<br><br>You have successfully registered with the following details:<br>${userHtmlTable}<br>Please wait for login until the admin approves you.`
-    );
+//     await sendEmail(
+//       email,
+//       "Registration Details",
+//       `Hello ${fullName},<br><br>You have successfully registered with the following details:<br>${userHtmlTable}<br>Please wait for login until the admin approves you.`
+//     );
 
-    return res.json({
-      success: "User registered successfully",
-      user: newUser,
-      token: token,
-    });
-  } catch (err) {
-    console.error("Error:", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
-});
+//     return res.json({
+//       success: "User registered successfully",
+//       user: newUser,
+//       token: token,
+//     });
+//   } catch (err) {
+//     console.error("Error:", err);
+//     return res.status(500).json({ error: "Internal server error" });
+//   }
+// });
 
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  console.log("emal:", email);
-  console.log("passs:", password);
+// app.post("/login", (req, res) => {
+//   const { email, password } = req.body;
+//   console.log("emal:", email);
+//   console.log("passs:", password);
 
-  // Check if the user exists with the provided email and password
-  const select = "SELECT * FROM sahil.users WHERE email=$1 AND password=$2";
+//   // Check if the user exists with the provided email and password
+//   const select = "SELECT * FROM sahil.users WHERE email=$1 AND password=$2";
 
-  db.query(select, [email, password], (err, data) => {
-    if (err) {
-      console.error({ err: "Database error" });
-      return res.status(500).json("Database error");
-    }
-    console.log(data);
+//   db.query(select, [email, password], (err, data) => {
+//     if (err) {
+//       console.error({ err: "Database error" });
+//       return res.status(500).json("Database error");
+//     }
+//     console.log(data);
 
-    if (data.rows.length > 0) {
-      const user = data.rows[0];
+//     if (data.rows.length > 0) {
+//       const user = data.rows[0];
 
-      // Check if the user is approved
-      // if (user.approved === false) { // Assuming approved is a boolean
-      //     return res.status(403).json({ error: 'Your account is not approved by the admin. Please wait for approval.' });
-      // }
+//       // Check if the user is approved
+//       // if (user.approved === false) { // Assuming approved is a boolean
+//       //     return res.status(403).json({ error: 'Your account is not approved by the admin. Please wait for approval.' });
+//       // }
 
-      // Create a JWT payload with user's role (admin/user)
-      const payload = {
-        id: user.id,
-        email: user.email,
-        role: user.role, // 'admin' or 'user'
-      };
+//       // Create a JWT payload with user's role (admin/user)
+//       const payload = {
+//         id: user.id,
+//         email: user.email,
+//         role: user.role, // 'admin' or 'user'
+//       };
 
-      // Sign the token with the secret key
-      const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+//       // Sign the token with the secret key
+//       const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
 
-      return res.status(200).json({
-        message: "Successful Login",
-        user: user,
-        token: token, // Return the JWT token
-      });
-    } else {
-      return res.status(404).json({ error: "Invalid email or password" });
-    }
-  });
-});
+//       return res.status(200).json({
+//         message: "Successful Login",
+//         user: user,
+//         token: token, // Return the JWT token
+//       });
+//     } else {
+//       return res.status(404).json({ error: "Invalid email or password" });
+//     }
+//   });
+// });
 
-app.post("/newproduct", upload.single("image"), (req, res) => {
-  // const imgpath = req.file.path.replace(/\\/g, "/");
+// app.post("/newproduct", upload.single("image"), (req, res) => {
+//   // const imgpath = req.file.path.replace(/\\/g, "/");
+//   console.log("hello");
 
-  const imgpath = `uploads/${req.file.filename}`;
+//   const imgpath = `uploads/${req.file.filename.replace(/\\/g, "/")}`;
 
-  const { name, price, discount, category, description } = req.body;
+//   const { name, price, discount, category, description } = req.body;
 
-  const insert =
-    "INSERT into sahil.products(name,price, discount,photo,category,description) VALUES ($1,$2,$3,$4,$5,$6)";
+//   const insert =
+//     "INSERT into sahil.products(name,price, discount,photo,category,description) VALUES ($1,$2,$3,$4,$5,$6)";
 
-  db.query(
-    insert,
-    [name, price, discount, imgpath, category, description],
-    (err, data) => {
-      if (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ error: "Database insertion error" });
-      } else {
-        res.json({ success: "The Product is register", data });
-      }
-    }
-  );
-});
+//   db.query(
+//     insert,
+//     [name, price, discount, imgpath, category, description],
+//     (err, data) => {
+//       if (err) {
+//         console.error("Database error:", err);
+//         return res.status(500).json({ error: "Database insertion error" });
+//       } else {
+//         res.json({ success: "The Product is register", data });
+//       }
+//     }
+//   );
+// });
 
 app.get("/ourproduct", (req, res) => {
   const query =
@@ -811,11 +812,9 @@ app.post("/cancel", async (req, res) => {
     await db.query(deleteProductsQuery, [userId]);
 
     // Respond with success message
-    return res
-      .status(200)
-      .json({
-        message: "Order has been canceled, products removed, and user notified",
-      });
+    return res.status(200).json({
+      message: "Order has been canceled, products removed, and user notified",
+    });
   } catch (error) {
     console.error("Error processing request:", error);
     return res.status(500).json({ error: "Internal Server Error" });
